@@ -36,12 +36,12 @@ def poblar_base_de_datos():
         json = {"email": admin_data["email"], "contrasena": admin_data["contrasena"]}, 
         headers = {"x-api-key": API_KEY}
     )
-    
     if login_resp.status_code == 200:
         token = login_resp.json()["access_token"]
         headers["Authorization"] = f"Bearer {token}"
-        print("Token obtenido correctamente, permisos de escritura concedidos")
+        print("\nToken obtenido correctamente, permisos de escritura concedidos")
     else:
+        print("\nError de autenticación")
         return
 
     ids = {
@@ -98,6 +98,7 @@ def poblar_base_de_datos():
         
         ("Refresco familiar 2L", "Refresco de cola", 2000.00)
     ]
+    print("\nInyectando recetas (Productos -> Ingredientes)...")
     for prod, ing, cant in recetas:
         id_p = ids["productos"].get(prod)
         id_p = ids["productos"].get(prod)
@@ -130,6 +131,7 @@ def poblar_base_de_datos():
                 "id_producto": id_p, 
                 "cantidad": cant
             }, "Producto -> Combo")
+    print("\nBase de datos poblada exitosamente")
 
 if __name__ == "__main__":
     time.sleep(2) 
