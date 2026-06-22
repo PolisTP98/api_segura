@@ -1,2 +1,2 @@
 # api_segura
-Crear una API segura protegida con API Key + JWT + roles + BOLA/IDOR + rate limiting
+Crear una API segura con API Key, JWT, RBAC, protección BOLA/IDOR y Rate Limiting
