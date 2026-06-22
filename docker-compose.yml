@@ -23,6 +23,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     # ASEGURAR QUE OTROS SERVICIOS NO SE CONECTEN HASTA QUE LA BD ESTÉ LISTA PARA RECIBIR CONSULTAS
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
@@ -38,7 +39,7 @@ services:
     container_name: little_caesars_pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@little_caesars.com
+      PGADMIN_DEFAULT_EMAIL: admin@littlecaesars.com
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'False'
     ports:
@@ -93,10 +94,10 @@ services:
       - ./registros_base.py:/registros_base.py
     env_file: .env
     environment:
-      - API_URL=${API_URL}
+      - API_URL=http://backend:8000
     command: sh -c "pip install requests && python /registros_base.py"
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - api_segura_network

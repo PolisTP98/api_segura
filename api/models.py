@@ -167,7 +167,7 @@ class Combo(Base):
 
     id_combo = Column(Integer, Identity(always = True), primary_key = True)
     nombre = Column(String(100), nullable = False)
-    descripcion = Column(String(255))
+    descripcion = Column(String(500))
     # RELACIONES
     productos = relationship(
         "ComboProducto", 

@@ -53,7 +53,7 @@ def poblar_base_de_datos():
         res = post_data("/api/unidades", {"nombre": u}, "Unidad")
         if res: ids["unidades"][u] = res["id_unidad_medida"]
 
-    categorias = ["Pizzas clásicas", "especialidades", "complementos", "bebidas"]
+    categorias = ["Pizzas clásicas", "Especialidades", "Complementos", "Bebidas"]
     for c in categorias:
         res = post_data("/api/categorias", {"nombre": c}, "Categoría")
         if res: ids["categorias"][c] = res["id_categoria"]
@@ -78,7 +78,7 @@ def poblar_base_de_datos():
         ("Hot-N-Ready Pepperoni", "Pizzas clásicas", "La clásica pizza de pepperoni lista para llevar."), 
         ("Hula Hawaiian", "Especialidades", "Pizza con jamón y piña."), 
         ("Crazy Bread", "Complementos", "8 piezas de pan recién horneado con mantequilla de ajo y parmesano."), 
-        ("Refresco Familiar 2L", "Bebidas", "Refresco de cola de 2 litros.")
+        ("Refresco familiar 2L", "Bebidas", "Refresco de cola de 2 litros.")
     ]
     for nombre, cat, desc in productos:
         id_cat = ids["categorias"].get(cat)
@@ -134,5 +134,6 @@ def poblar_base_de_datos():
     print("\nBase de datos poblada exitosamente")
 
 if __name__ == "__main__":
-    time.sleep(2) 
+    print("Esperando a que el backend esté listo en la red...")
+    time.sleep(5)
     poblar_base_de_datos()

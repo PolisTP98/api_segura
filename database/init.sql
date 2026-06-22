@@ -101,7 +101,7 @@ create table lcs_pro.producto_ingredientes(
 create table lcs_pro.combos(
     id_combo int generated always as identity primary key,
     nombre varchar(100) not null,
-    descripcion varchar(255)
+    descripcion varchar(500)
 );
 
 -- ALMACENAR LOS COMBOS DE LOS PRODUCTOS
