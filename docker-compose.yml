@@ -1,0 +1,86 @@
+# REDES PARA PERMITIR LA COMUNICACIÓN AISLADA ENTRE CONTENEDORES
+networks:
+  api_segura_network:
+    driver: bridge
+
+# VOLÚMENES PARA GARANTIZAR LA PERSISTENCIA DE DATOS FUERA DE LOS CONTENEDORES
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+services:
+  # BASE DE DATOS (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: little_caesars_db
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # ASEGURA QUE OTROS SERVICIOS NO SE CONECTEN HASTA QUE LA BD ESTÉ LISTA PARA RECIBIR CONSULTAS
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - api_segura_network
+
+  # INTERFAZ DE LA BASE DE DATOS (pgAdmin4)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: little_caesars_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@little_caesars.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    networks:
+      - api_segura_network
+
+  # API CENTRAL (FastAPI)
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: little_caesars_backend
+    restart: always
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - api_segura_network
+
+  # FRONTEND (Flask)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: little_caesars_frontend
+    restart: always
+    env_file: .env
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+    networks:
+      - api_segura_network
