@@ -23,7 +23,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # ASEGURA QUE OTROS SERVICIOS NO SE CONECTEN HASTA QUE LA BD ESTÉ LISTA PARA RECIBIR CONSULTAS
+    # ASEGURAR QUE OTROS SERVICIOS NO SE CONECTEN HASTA QUE LA BD ESTÉ LISTA PARA RECIBIR CONSULTAS
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
       interval: 5s
@@ -82,5 +82,21 @@ services:
       - ./frontend:/app
     depends_on:
       - backend
+    networks:
+      - api_segura_network
+
+  # SCRIPT AUTOMÁTICO DE INYECCIÓN DE DATOS EN LA BD (SEEDER)
+  seeder:
+    image: python:3.10-alpine
+    container_name: little_caesars_seeder
+    volumes:
+      - ./registros_base.py:/registros_base.py
+    env_file: .env
+    environment:
+      - API_URL=${API_URL}
+    command: sh -c "pip install requests && python /registros_base.py"
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
       - api_segura_network
