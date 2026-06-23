@@ -75,10 +75,10 @@ def poblar_base_de_datos():
             if res: ids["ingredientes"][nombre] = res["id_ingrediente"]
 
     productos = [
-        ("Hot-N-Ready Pepperoni", "Pizzas clásicas", "La clásica pizza de pepperoni lista para llevar."), 
-        ("Hula Hawaiian", "Especialidades", "Pizza con jamón y piña."), 
-        ("Crazy Bread", "Complementos", "8 piezas de pan recién horneado con mantequilla de ajo y parmesano."), 
-        ("Refresco familiar 2L", "Bebidas", "Refresco de cola de 2 litros.")
+        ("Hot-N-Ready Pepperoni", "Pizzas clásicas", "La clásica pizza de pepperoni lista para llevar"), 
+        ("Hula Hawaiian", "Especialidades", "Pizza con jamón y piña"), 
+        ("Crazy Bread", "Complementos", "8 piezas de pan recién horneado con mantequilla de ajo y parmesano"), 
+        ("Refresco familiar 2l", "Bebidas", "Refresco de cola de 2 litros")
     ]
     for nombre, cat, desc in productos:
         id_cat = ids["categorias"].get(cat)
@@ -96,7 +96,7 @@ def poblar_base_de_datos():
         ("Crazy Bread", "Mantequilla de ajo", 50.00), 
         ("Crazy Bread", "Queso parmesano", 25.00), 
         
-        ("Refresco familiar 2L", "Refresco de cola", 2000.00)
+        ("Refresco familiar 2l", "Refresco de cola", 2000.00)
     ]
     print("\nInyectando recetas (Productos -> Ingredientes)...")
     for prod, ing, cant in recetas:
@@ -120,7 +120,7 @@ def poblar_base_de_datos():
     asignaciones_combos = [
         ("Combo clásico HNR", "Hot-N-Ready Pepperoni", 1), 
         ("Combo clásico HNR", "Crazy Bread", 1), 
-        ("Combo clásico HNR", "Refresco familiar 2L", 1)
+        ("Combo clásico HNR", "Refresco familiar 2l", 1)
     ]
     for combo, prod, cant in asignaciones_combos:
         id_c = ids["combos"].get(combo)
@@ -134,6 +134,5 @@ def poblar_base_de_datos():
     print("\nBase de datos poblada exitosamente")
 
 if __name__ == "__main__":
-    print("Esperando a que el backend esté listo en la red...")
     time.sleep(5)
     poblar_base_de_datos()
