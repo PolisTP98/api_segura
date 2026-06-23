@@ -13,21 +13,22 @@
         button:hover { opacity: 0.9; }
         button.danger { background: #b00020; }
         button.success { background: #28a745; }
-        input, select { padding: 8px; border: 1px solid #bbb; border-radius: 5px; }
+        input, select { padding: 8px; border: 1px solid #bbb; border-radius: 5px; min-width: 160px; }
         pre { background: #111; color: #0f0; padding: 15px; overflow-x: auto; border-radius: 8px; font-size: 0.9em; }
         .ok { background: #dff5df; border: 1px solid #8bc48b; }
         .error { background: #ffe0e0; border: 1px solid #cc7777; }
-        .muted { color: #666; font-size: 0.95em; }
+        .muted { color: #666; font-size: 0.95em; margin-top: 5px; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 5px; font-size: 0.85em; background: #e0e0e0; }
+        hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Gestor de catálogo</h1>
-        <p><span class="badge">Backend conectado en: {{ api_url }}</span></p>
+        <h1>Gestión de inventario</h1>
+        <p><span class="badge">API (backend) conectada en: {{ api_url }}</span></p>
 
         <div class="card">
-            <h2>Autenticación</h2>
+            <h2>Iniciar sesión</h2>
             {% if not usuario %}
                 <form method="POST" class="row">
                     <input type="hidden" name="accion" value="login">
@@ -35,7 +36,7 @@
                     <input type="password" name="contrasena" placeholder="Contraseña" required>
                     <button type="submit">Iniciar sesión</button>
                 </form>
-                <p class="muted">Necesitas iniciar sesión para interactuar con la API</p>
+                <p class="muted">Debes iniciar sesión para hacer peticiones a la API</p>
             {% else %}
                 <div class="row">
                     <span class="badge" style="background:#dff5df;">Usuario: {{ usuario.email }} (ID: {{ usuario.id }})</span>
@@ -49,8 +50,7 @@
         </div>
 
         <div class="card">
-            <h2>Gestión de usuarios & prueba IDOR</h2>
-            
+            <h2>Gestionar usuarios</h2>
             <form method="POST" class="row">
                 <input type="hidden" name="accion" value="crear_usuario">
                 <input type="text" name="nombre_completo" placeholder="Nombre completo" required>
@@ -66,32 +66,128 @@
             <form method="POST" class="row">
                 <input type="hidden" name="accion" value="consultar_usuario">
                 <input type="number" name="id_usuario" placeholder="ID de Usuario" min="1" required>
-                <button type="submit">Consultar usuario (prueba IDOR/RBAC)</button>
+                <button type="submit">Consultar usuario</button>
             </form>
         </div>
 
         <div class="card">
-            <h2>Catálogo y productos</h2>
-            
+            <h2>Consultas generales (GET)</h2>
             <form method="POST" class="row">
-                <button type="submit" name="accion" value="listar_categorias">Listar categorías (GET)</button>
+                <button type="submit" name="accion" value="listar_categorias">Listar categorías de productos (GET)</button>
                 <button type="submit" name="accion" value="listar_productos">Listar productos (GET)</button>
+                <button type="submit" name="accion" value="listar_combos">Listar combos de productos (GET)</button>
             </form>
+        </div>
 
-            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-
+        <div class="card">
+            <h2>Operaciones del inventario de productos</h2>
+            <p class="muted" style="color: #b00020; font-weight: bold;">Las operaciones de escritura (POST) requieren privilegios de administrador</p>
+            
+            <h3>1.- Categorías de productos</h3>
             <form method="POST" class="row">
                 <input type="hidden" name="accion" value="crear_categoria">
-                <input type="text" name="nombre_categoria" placeholder="Nombre de categoría" required>
+                <input type="text" name="nombre_categoria" placeholder="Nombre" required>
                 <button type="submit" class="success">Crear categoría</button>
             </form>
-            <p class="muted">Las operaciones de escritura (POST) requieren privilegios de administrador</p>
+
+            <hr>
+
+            <h3>2.- Ingredientes de los productos</h3>
+            <form method="POST" class="row">
+                <input type="hidden" name="accion" value="crear_ingrediente">
+                <input type="text" name="nombre_ingrediente" placeholder="Nombre" required>
+                <select name="id_unidad_medida" required>
+                    <option value="" disabled selected>-- Unidad de medida --</option>
+                    {% for und in unidades %}
+                        <option value="{{ und.id_unidad_medida }}">{{ und.nombre }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="success">Crear ingrediente</button>
+            </form>
+
+            <hr>
+
+            <h3>3.- Productos</h3>
+            <form method="POST" class="row">
+                <input type="hidden" name="accion" value="crear_producto">
+                <input type="text" name="nombre_producto" placeholder="Nombre" required>
+                <input type="text" name="descripcion_producto" placeholder="Descripción (opcional)">
+                
+                <select name="id_categoria" required>
+                    <option value="" disabled selected>-- Categoría del producto --</option>
+                    {% for cat in categorias %}
+                        <option value="{{ cat.id_categoria }}">{{ cat.nombre }} (ID: {{ cat.id_categoria }})</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="success">Crear producto</button>
+            </form>
+
+            <hr>
+
+            <h3>4.- Ingredientes de productos (receta)</h3>
+            <p class="muted">Puedes realizar este proceso varias veces para armar la receta completa de un producto</p>
+            <form method="POST" class="row">
+                <input type="hidden" name="accion" value="asignar_ingrediente">
+                
+                <select name="id_producto" required>
+                    <option value="" disabled selected>-- Producto --</option>
+                    {% for prod in productos %}
+                        <option value="{{ prod.id_producto }}">{{ prod.nombre }} (ID: {{ prod.id_producto }})</option>
+                    {% endfor %}
+                </select>
+
+                <select name="id_ingrediente" required>
+                    <option value="" disabled selected>-- Ingrediente --</option>
+                    {% for ing in ingredientes %}
+                        <option value="{{ ing.id_ingrediente }}">{{ ing.nombre }} (ID: {{ ing.id_ingrediente }})</option>
+                    {% endfor %}
+                </select>
+
+                <input type="number" name="cantidad" placeholder="Cantidad" step="0.01" min="0.01" required>
+                <button type="submit" class="success">Asignar ingrediente</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Combos de productos</h2>
+            
+            <h3>1.- Crear combo</h3>
+            <form method="POST" class="row">
+                <input type="hidden" name="accion" value="crear_combo">
+                <input type="text" name="nombre_combo" placeholder="Nombre" required>
+                <input type="text" name="descripcion_combo" placeholder="Descripción (opcional)">
+                <button type="submit" class="success">Guardar combo</button>
+            </form>
+
+            <hr>
+
+            <h3>2.- Agregar productos al combo</h3>
+            <form method="POST" class="row">
+                <input type="hidden" name="accion" value="agregar_producto_combo">
+                
+                <select name="id_combo" required>
+                    <option value="" disabled selected>-- Combo --</option>
+                    {% for comb in combos %}
+                        <option value="{{ comb.id_combo }}">{{ comb.nombre }} (ID: {{ comb.id_combo }})</option>
+                    {% endfor %}
+                </select>
+
+                <select name="id_producto" required>
+                    <option value="" disabled selected>-- Producto --</option>
+                    {% for prod in productos %}
+                        <option value="{{ prod.id_producto }}">{{ prod.nombre }} (ID: {{ prod.id_producto }})</option>
+                    {% endfor %}
+                </select>
+
+                <input type="number" name="cantidad_producto_combo" placeholder="Cantidad" min="1" required>
+                <button type="submit" class="success">Añadir al combo</button>
+            </form>
         </div>
 
         {% if resultado %}
             <div class="card {% if resultado.ok %}ok{% else %}error{% endif %}">
-                <h2>Consola de respuestas</h2>
-                <p><strong>Endpoint:</strong> {{ resultado.url }} | <strong>status:</strong> {{ resultado.status_code }}</p>
+                <h2>Consola</h2>
+                <p><strong>Endpoint evaluado:</strong> {{ resultado.url }} | <strong>Código de estado:</strong> {{ resultado.status_code }}</p>
                 <pre>{{ resultado.data | tojson(indent = 2) }}</pre>
             </div>
         {% endif %}

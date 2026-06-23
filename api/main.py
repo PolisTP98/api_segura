@@ -17,6 +17,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from slowapi.middleware import SlowAPIMiddleware
 
+import json
+
 from database import get_db
 from models import(
     Usuario, UnidadMedida, Ingrediente, CategoriaProducto, 
@@ -25,10 +27,26 @@ from models import(
 
 load_dotenv()
 
+
+# --------------------------------------------------------------
+# | CONFIGURACIÓN DE RESPUESTA JSON PARA CARACTERES EN ESPAÑOL |
+# --------------------------------------------------------------
+
+class NativeJSONResponse(JSONResponse):
+    def render(self, content) -> bytes:
+        return json.dumps(
+            content, 
+            ensure_ascii = False, 
+            allow_nan = False, 
+            indent = None, 
+            separators = (",", ":"),
+        ).encode("utf-8")
+
 app = FastAPI(
     title = "API de Little Caesars", 
     description = "API segura con API Key, JWT, RBAC, protección BOLA/IDOR y Rate Limiting", 
-    version = "1.0.0"
+    version = "1.0.0", 
+    default_response_class = NativeJSONResponse
 )
 
 
@@ -44,7 +62,7 @@ app.add_middleware(SlowAPIMiddleware)
 def rate_limit_handler(request: Request, exceeded: RateLimitExceeded):
     return JSONResponse(
         status_code = 429, 
-        content = {"error": "Demasiadas solicitudes", "message": "Has excedido el límite permitido."}
+        content = {"error": "Demasiadas solicitudes", "message": "Has excedido el límite permitido"}
     )
 
 
@@ -144,8 +162,13 @@ def obtener_hash_contrasena(contrasena: str) -> str:
     return bcrypt.hashpw(contrasena.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 def verificar_contrasena(contrasena_plana: str, hash_contrasena: str) -> bool:
-    hash_contrasena = hash_contrasena.replace("$2y$", "$2b$")
-    return bcrypt.checkpw(contrasena_plana.encode("utf-8"), hash_contrasena.encode("utf-8"))
+    if isinstance(hash_conn_str := hash_contrasena, bytes):
+        hash_conn_str = hash_contrasena.decode("utf-8")
+    hash_corregido = hash_conn_str.replace("$2y$", "$2b$")
+    return bcrypt.checkpw(
+        contrasena_plana.encode("utf-8"), 
+        hash_corregido.encode("utf-8")
+    )
 
 def crear_token(usuario: Usuario):
     expiracion = datetime.now(timezone.utc) + timedelta(minutes = ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -201,7 +224,13 @@ def login(request: Request, datos_login: LoginRequest, api_key: bool = Depends(v
 
 @app.post("/api/usuarios", response_model = UsuarioOut, tags = ["Usuarios"])
 @limiter.limit("10/minute")
-def crear_usuario(request: Request, user_in: UsuarioCreate, api_key: bool = Depends(validar_api_key), db: Session = Depends(get_db)):
+def crear_usuario(
+    request: Request, 
+    user_in: UsuarioCreate, 
+    admin: Usuario = Depends(requiere_admin), 
+    api_key: bool = Depends(validar_api_key), 
+    db: Session = Depends(get_db)
+):
     if db.query(Usuario).filter(Usuario.email == user_in.email).first():
         raise HTTPException(status_code = 400, detail = "El email ya está registrado")
     nuevo_usuario = Usuario(
@@ -308,7 +337,7 @@ def eliminar_producto(id_producto: int, admin: Usuario = Depends(requiere_admin)
     db.commit()
     return {"message": "Producto eliminado"}
 
-@app.post("/api/productos/ingredientes", tags = ["Productos (Receta)"])
+@app.post("/api/productos/ingredientes", tags = ["Productos"])
 def agregar_ingrediente_a_producto(
     producto_ingrediente_in: ProductoIngredienteSchema, admin: Usuario = Depends(requiere_admin), db: Session = Depends(get_db)
 ):

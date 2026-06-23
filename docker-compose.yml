@@ -92,12 +92,11 @@ services:
     container_name: little_caesars_seeder
     volumes:
       - ./registros_base.py:/registros_base.py
+      - ./api:/api
     env_file: .env
-    environment:
-      - API_URL=http://backend:8000
-    command: sh -c "pip install requests && python /registros_base.py"
+    command: sh -c "pip install bcrypt sqlalchemy psycopg2-binary && python /registros_base.py"
     depends_on:
-      backend:
-        condition: service_started
+      db:
+        condition: service_healthy
     networks:
       - api_segura_network
